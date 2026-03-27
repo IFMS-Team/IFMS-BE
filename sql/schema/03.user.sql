@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS users (
+    user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    username VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    status INTEGER NOT NULL DEFAULT 1,
+    phone VARCHAR(30) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    cccd VARCHAR(30) NOT NULL UNIQUE,
+    role_id UUID NOT NULL REFERENCES roles(role_id) ON DELETE RESTRICT
+);
