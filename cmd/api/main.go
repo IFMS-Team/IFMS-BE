@@ -3,9 +3,9 @@ package main
 import (
 	"net/http"
 
-	"IFMS-be/database"
-	auditMw "IFMS-be/middleware"
-	redisclient "IFMS-be/redis"
+	"github.com/vippergod12/IFMS-BE/database"
+	auditMw "github.com/vippergod12/IFMS-BE/middleware"
+	redisclient "github.com/vippergod12/IFMS-BE/redis"
 
 	"go.uber.org/zap"
 )

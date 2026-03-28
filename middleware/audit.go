@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"IFMS-be/database"
-	db "IFMS-be/sql/generated"
+	"github.com/vippergod12/IFMS-BE/database"
+	db "github.com/vippergod12/IFMS-BE/sql/generated"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"

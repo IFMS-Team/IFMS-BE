@@ -1,4 +1,4 @@
-module IFMS-be
+module github.com/vippergod12/IFMS-BE
 
 go 1.26.1
 
