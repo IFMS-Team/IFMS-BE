@@ -29,3 +29,30 @@ SELECT u.*, r.role_name, r.description as role_description
 FROM users u
 JOIN roles r ON u.role_id = r.role_id
 WHERE u.user_id = $1;
+
+-- name: InsertUserSession :exec
+INSERT INTO user_sessions (user_id, token, device_info, ip_address, is_deleted, expired_at)
+VALUES ($1, $2, $3, $4, $5, $6);
+
+-- name: DeleteUserSession :exec
+UPDATE user_sessions SET is_deleted = true, updated_at = NOW()
+WHERE user_id = $1 AND token = $2;
+
+-- name: DeleteUserSessionsByUserId :exec
+UPDATE user_sessions SET is_deleted = true, updated_at = NOW()
+WHERE user_id = $1 AND is_deleted = false;
+
+-- name: GetActiveSessionsByUserID :many
+SELECT * FROM user_sessions
+WHERE user_id = $1 AND is_deleted = false AND expired_at > EXTRACT(EPOCH FROM NOW())::BIGINT
+ORDER BY created_at DESC;
+
+-- name: InsertUserTrackingHistory :exec
+INSERT INTO user_tracking_history (user_id, nonce, action, entity_type, entity_id, ip_address, description)
+VALUES ($1, $2, $3, $4, $5, $6, $7);
+
+-- name: GetUserTrackingHistory :many
+SELECT * FROM user_tracking_history
+WHERE user_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3;

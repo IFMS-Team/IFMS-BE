@@ -174,6 +174,31 @@ type User struct {
 	RoleID       pgtype.UUID      `json:"role_id"`
 }
 
+type UserSession struct {
+	SessionID  pgtype.UUID        `json:"session_id"`
+	UserID     pgtype.UUID        `json:"user_id"`
+	Token      string             `json:"token"`
+	DeviceInfo pgtype.Text        `json:"device_info"`
+	IpAddress  pgtype.Text        `json:"ip_address"`
+	IsDeleted  bool               `json:"is_deleted"`
+	ExpiredAt  int64              `json:"expired_at"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
+type UserTrackingHistory struct {
+	TrackingID  pgtype.UUID        `json:"tracking_id"`
+	UserID      pgtype.UUID        `json:"user_id"`
+	Nonce       int64              `json:"nonce"`
+	Action      string             `json:"action"`
+	EntityType  pgtype.Text        `json:"entity_type"`
+	EntityID    pgtype.UUID        `json:"entity_id"`
+	IpAddress   pgtype.Text        `json:"ip_address"`
+	Description pgtype.Text        `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
 type WebhookLog struct {
 	ID              int64              `json:"id"`
 	Timestamp       pgtype.Timestamptz `json:"timestamp"`

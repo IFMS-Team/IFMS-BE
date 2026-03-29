@@ -27,6 +27,25 @@ func (q *Queries) AddPermissionToRole(ctx context.Context, arg AddPermissionToRo
 	return err
 }
 
+const checkRoleHasPermission = `-- name: CheckRoleHasPermission :one
+SELECT COUNT(*) > 0 AS has_permission
+FROM role_permissions rp
+JOIN permissions p ON rp.permission_id = p.permission_id
+WHERE rp.role_id = $1 AND p.permission_name = $2
+`
+
+type CheckRoleHasPermissionParams struct {
+	RoleID         pgtype.UUID `json:"role_id"`
+	PermissionName string      `json:"permission_name"`
+}
+
+func (q *Queries) CheckRoleHasPermission(ctx context.Context, arg CheckRoleHasPermissionParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkRoleHasPermission, arg.RoleID, arg.PermissionName)
+	var has_permission bool
+	err := row.Scan(&has_permission)
+	return has_permission, err
+}
+
 const createPermission = `-- name: CreatePermission :one
 INSERT INTO permissions (permission_name, description)
 VALUES ($1, $2)

@@ -12,6 +12,7 @@ import (
 
 type Querier interface {
 	AddPermissionToRole(ctx context.Context, arg AddPermissionToRoleParams) error
+	CheckRoleHasPermission(ctx context.Context, arg CheckRoleHasPermissionParams) (bool, error)
 	CreateAuditLog(ctx context.Context, arg CreateAuditLogParams) (AuditLog, error)
 	CreatePermission(ctx context.Context, arg CreatePermissionParams) (Permission, error)
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
@@ -19,6 +20,9 @@ type Querier interface {
 	DeletePermission(ctx context.Context, permissionID pgtype.UUID) error
 	DeleteRole(ctx context.Context, roleID pgtype.UUID) error
 	DeleteUser(ctx context.Context, userID pgtype.UUID) error
+	DeleteUserSession(ctx context.Context, arg DeleteUserSessionParams) error
+	DeleteUserSessionsByUserId(ctx context.Context, userID pgtype.UUID) error
+	GetActiveSessionsByUserID(ctx context.Context, userID pgtype.UUID) ([]UserSession, error)
 	GetAnalyticsSnapshots(ctx context.Context, limit int32) ([]AnalyticsSnapshot, error)
 	GetAuditLogsByAction(ctx context.Context, arg GetAuditLogsByActionParams) ([]AuditLog, error)
 	GetAuditLogsByRecordID(ctx context.Context, recordID string) ([]AuditLog, error)
@@ -48,7 +52,10 @@ type Querier interface {
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, userID pgtype.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
+	GetUserTrackingHistory(ctx context.Context, arg GetUserTrackingHistoryParams) ([]UserTrackingHistory, error)
 	GetUserWithRole(ctx context.Context, userID pgtype.UUID) (GetUserWithRoleRow, error)
+	InsertUserSession(ctx context.Context, arg InsertUserSessionParams) error
+	InsertUserTrackingHistory(ctx context.Context, arg InsertUserTrackingHistoryParams) error
 	ListPermissions(ctx context.Context) ([]Permission, error)
 	ListRoles(ctx context.Context) ([]Role, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)

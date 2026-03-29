@@ -25,3 +25,9 @@ ON CONFLICT DO NOTHING;
 -- name: RemovePermissionFromRole :exec
 DELETE FROM role_permissions
 WHERE role_id = $1 AND permission_id = $2;
+
+-- name: CheckRoleHasPermission :one
+SELECT COUNT(*) > 0 AS has_permission
+FROM role_permissions rp
+JOIN permissions p ON rp.permission_id = p.permission_id
+WHERE rp.role_id = $1 AND p.permission_name = $2;
