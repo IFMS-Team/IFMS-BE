@@ -12,13 +12,36 @@ import (
 
 type Querier interface {
 	AddPermissionToRole(ctx context.Context, arg AddPermissionToRoleParams) error
+	AssignMaintenanceTicket(ctx context.Context, arg AssignMaintenanceTicketParams) (MaintenanceTicket, error)
 	CheckRoleHasPermission(ctx context.Context, arg CheckRoleHasPermissionParams) (bool, error)
+	CloseReportChecker(ctx context.Context, arg CloseReportCheckerParams) (ReportChecker, error)
+	CloseReportGuest(ctx context.Context, arg CloseReportGuestParams) (ReportGuest, error)
+	CompleteMaintenanceTicket(ctx context.Context, ticketID pgtype.UUID) (MaintenanceTicket, error)
+	CountMaintenanceTicketsByStatus(ctx context.Context, status string) (int64, error)
+	CountOpenReportCheckers(ctx context.Context) (int64, error)
+	CountOpenReportGuests(ctx context.Context) (int64, error)
+	CountPendingTicketItems(ctx context.Context, ticketID pgtype.UUID) (int64, error)
+	CountTicketItemsByStatus(ctx context.Context, arg CountTicketItemsByStatusParams) (int64, error)
+	CountUsers(ctx context.Context) (int64, error)
+	CountUsersByStatus(ctx context.Context, status int32) (int64, error)
 	CreateAuditLog(ctx context.Context, arg CreateAuditLogParams) (AuditLog, error)
+	// ===================== MAINTENANCE TICKETS =====================
+	CreateMaintenanceTicket(ctx context.Context, arg CreateMaintenanceTicketParams) (MaintenanceTicket, error)
+	// ===================== MAINTENANCE TICKET ITEMS =====================
+	CreateMaintenanceTicketItem(ctx context.Context, arg CreateMaintenanceTicketItemParams) (MaintenanceTicketItem, error)
+	// ===================== MAINTENANCE TICKET SCOPES =====================
+	CreateMaintenanceTicketScope(ctx context.Context, arg CreateMaintenanceTicketScopeParams) (MaintenanceTicketScope, error)
 	CreatePermission(ctx context.Context, arg CreatePermissionParams) (Permission, error)
+	// ===================== REPORT CHECKER =====================
+	CreateReportChecker(ctx context.Context, arg CreateReportCheckerParams) (ReportChecker, error)
+	// ===================== REPORT GUEST =====================
+	CreateReportGuest(ctx context.Context, arg CreateReportGuestParams) (ReportGuest, error)
 	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteMaintenanceTicket(ctx context.Context, ticketID pgtype.UUID) error
 	DeletePermission(ctx context.Context, permissionID pgtype.UUID) error
 	DeleteRole(ctx context.Context, roleID pgtype.UUID) error
+	DeleteScopesByTicketID(ctx context.Context, ticketID pgtype.UUID) error
 	DeleteUser(ctx context.Context, userID pgtype.UUID) error
 	DeleteUserSession(ctx context.Context, arg DeleteUserSessionParams) error
 	DeleteUserSessionsByUserId(ctx context.Context, userID pgtype.UUID) error
@@ -30,6 +53,7 @@ type Querier interface {
 	GetAuditLogsByUserID(ctx context.Context, arg GetAuditLogsByUserIDParams) ([]AuditLog, error)
 	// ===================== DASHBOARD OVERVIEW =====================
 	GetDashboardOverview(ctx context.Context) (GetDashboardOverviewRow, error)
+	GetMaintenanceTicketByID(ctx context.Context, ticketID pgtype.UUID) (GetMaintenanceTicketByIDRow, error)
 	// ===================== MONTHLY PRODUCT ADDITIONS =====================
 	GetMonthlyProductAdditions(ctx context.Context) ([]GetMonthlyProductAdditionsRow, error)
 	GetPermissionByID(ctx context.Context, permissionID pgtype.UUID) (Permission, error)
@@ -38,6 +62,8 @@ type Querier interface {
 	GetProductCountByBuilding(ctx context.Context) ([]GetProductCountByBuildingRow, error)
 	// ===================== PRODUCTS BY CATEGORY =====================
 	GetProductCountByCategory(ctx context.Context) ([]GetProductCountByCategoryRow, error)
+	GetProductsByBuildingID(ctx context.Context, buildingID pgtype.UUID) ([]GetProductsByBuildingIDRow, error)
+	GetProductsByRoomIDs(ctx context.Context, dollar_1 []pgtype.UUID) ([]GetProductsByRoomIDsRow, error)
 	// ===================== PRODUCTS BY STATUS =====================
 	GetProductsByStatus(ctx context.Context) ([]GetProductsByStatusRow, error)
 	GetProductsWarrantyExpired(ctx context.Context, arg GetProductsWarrantyExpiredParams) ([]GetProductsWarrantyExpiredRow, error)
@@ -45,24 +71,56 @@ type Querier interface {
 	GetProductsWarrantyExpiringSoon(ctx context.Context) ([]GetProductsWarrantyExpiringSoonRow, error)
 	// ===================== RECENT ACTIVITIES =====================
 	GetRecentAuditLogs(ctx context.Context, arg GetRecentAuditLogsParams) ([]GetRecentAuditLogsRow, error)
+	GetReportCheckerByID(ctx context.Context, reportCheckerID pgtype.UUID) (GetReportCheckerByIDRow, error)
+	GetReportGuestByID(ctx context.Context, reportGuestID pgtype.UUID) (GetReportGuestByIDRow, error)
 	GetRoleByID(ctx context.Context, roleID pgtype.UUID) (Role, error)
 	GetRoleByName(ctx context.Context, roleName string) (Role, error)
 	// ===================== ROOM UTILIZATION =====================
 	GetRoomUtilization(ctx context.Context, arg GetRoomUtilizationParams) ([]GetRoomUtilizationRow, error)
+	GetScopesByTicketID(ctx context.Context, ticketID pgtype.UUID) ([]GetScopesByTicketIDRow, error)
+	GetTicketItemByID(ctx context.Context, ticketItemID pgtype.UUID) (GetTicketItemByIDRow, error)
+	GetUserByCCCD(ctx context.Context, cccd string) (User, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
+	// ===================== USER CRUD =====================
 	GetUserByID(ctx context.Context, userID pgtype.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	GetUserTrackingHistory(ctx context.Context, arg GetUserTrackingHistoryParams) ([]UserTrackingHistory, error)
 	GetUserWithRole(ctx context.Context, userID pgtype.UUID) (GetUserWithRoleRow, error)
+	// ===================== USER SESSIONS =====================
 	InsertUserSession(ctx context.Context, arg InsertUserSessionParams) error
+	// ===================== USER TRACKING =====================
 	InsertUserTrackingHistory(ctx context.Context, arg InsertUserTrackingHistoryParams) error
+	ListMaintenanceTickets(ctx context.Context, arg ListMaintenanceTicketsParams) ([]ListMaintenanceTicketsRow, error)
+	ListMaintenanceTicketsByAssignee(ctx context.Context, arg ListMaintenanceTicketsByAssigneeParams) ([]ListMaintenanceTicketsByAssigneeRow, error)
+	ListMaintenanceTicketsByStatus(ctx context.Context, arg ListMaintenanceTicketsByStatusParams) ([]ListMaintenanceTicketsByStatusRow, error)
+	ListMaintenanceTicketsByType(ctx context.Context, arg ListMaintenanceTicketsByTypeParams) ([]ListMaintenanceTicketsByTypeRow, error)
+	ListOpenReportCheckers(ctx context.Context, arg ListOpenReportCheckersParams) ([]ListOpenReportCheckersRow, error)
+	ListOpenReportGuests(ctx context.Context, arg ListOpenReportGuestsParams) ([]ListOpenReportGuestsRow, error)
 	ListPermissions(ctx context.Context) ([]Permission, error)
+	ListReportCheckers(ctx context.Context, arg ListReportCheckersParams) ([]ListReportCheckersRow, error)
+	ListReportCheckersByRoomID(ctx context.Context, arg ListReportCheckersByRoomIDParams) ([]ListReportCheckersByRoomIDRow, error)
+	ListReportGuests(ctx context.Context, arg ListReportGuestsParams) ([]ListReportGuestsRow, error)
+	ListReportGuestsByRoomID(ctx context.Context, arg ListReportGuestsByRoomIDParams) ([]ReportGuest, error)
 	ListRoles(ctx context.Context) ([]Role, error)
+	ListTicketItemsByRoomID(ctx context.Context, arg ListTicketItemsByRoomIDParams) ([]ListTicketItemsByRoomIDRow, error)
+	ListTicketItemsByTicketID(ctx context.Context, ticketID pgtype.UUID) ([]ListTicketItemsByTicketIDRow, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
+	ListUsersByRoleID(ctx context.Context, arg ListUsersByRoleIDParams) ([]User, error)
+	ListUsersByStatus(ctx context.Context, arg ListUsersByStatusParams) ([]User, error)
+	ListUsersWithRole(ctx context.Context, arg ListUsersWithRoleParams) ([]ListUsersWithRoleRow, error)
 	RemovePermissionFromRole(ctx context.Context, arg RemovePermissionFromRoleParams) error
 	// ===================== SNAPSHOTS =====================
 	SaveAnalyticsSnapshot(ctx context.Context, arg SaveAnalyticsSnapshotParams) (AnalyticsSnapshot, error)
+	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]SearchUsersRow, error)
+	SoftDeleteUser(ctx context.Context, userID pgtype.UUID) (User, error)
+	UpdateMaintenanceTicketStatus(ctx context.Context, arg UpdateMaintenanceTicketStatusParams) (MaintenanceTicket, error)
+	UpdateReportCheckerStatus(ctx context.Context, arg UpdateReportCheckerStatusParams) (ReportChecker, error)
+	UpdateReportGuestStatus(ctx context.Context, arg UpdateReportGuestStatusParams) (ReportGuest, error)
+	UpdateTicketItemCheckStatus(ctx context.Context, arg UpdateTicketItemCheckStatusParams) (MaintenanceTicketItem, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
+	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
+	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (User, error)
+	UpdateUserStatus(ctx context.Context, arg UpdateUserStatusParams) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)

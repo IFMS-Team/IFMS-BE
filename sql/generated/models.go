@@ -102,6 +102,42 @@ type Item struct {
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
+type MaintenanceTicket struct {
+	TicketID      pgtype.UUID        `json:"ticket_id"`
+	TicketType    string             `json:"ticket_type"`
+	Title         string             `json:"title"`
+	Description   pgtype.Text        `json:"description"`
+	Status        string             `json:"status"`
+	Priority      string             `json:"priority"`
+	ScheduledDate pgtype.Date        `json:"scheduled_date"`
+	CompletedDate pgtype.Timestamptz `json:"completed_date"`
+	BuildingID    pgtype.UUID        `json:"building_id"`
+	CreatedBy     pgtype.UUID        `json:"created_by"`
+	AssignedTo    pgtype.UUID        `json:"assigned_to"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
+type MaintenanceTicketItem struct {
+	TicketItemID pgtype.UUID        `json:"ticket_item_id"`
+	TicketID     pgtype.UUID        `json:"ticket_id"`
+	ProductID    pgtype.UUID        `json:"product_id"`
+	RoomID       pgtype.UUID        `json:"room_id"`
+	CheckStatus  string             `json:"check_status"`
+	Note         pgtype.Text        `json:"note"`
+	CheckedBy    pgtype.UUID        `json:"checked_by"`
+	CheckedAt    pgtype.Timestamptz `json:"checked_at"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+type MaintenanceTicketScope struct {
+	ScopeID  pgtype.UUID `json:"scope_id"`
+	TicketID pgtype.UUID `json:"ticket_id"`
+	FloorID  pgtype.UUID `json:"floor_id"`
+	RoomID   pgtype.UUID `json:"room_id"`
+}
+
 type Permission struct {
 	PermissionID   pgtype.UUID      `json:"permission_id"`
 	PermissionName string           `json:"permission_name"`
@@ -133,6 +169,35 @@ type Product struct {
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 }
 
+type ReportChecker struct {
+	ReportCheckerID pgtype.UUID        `json:"report_checker_id"`
+	UserID          pgtype.UUID        `json:"user_id"`
+	RoomID          pgtype.UUID        `json:"room_id"`
+	Status          int32              `json:"status"`
+	IsOpen          bool               `json:"is_open"`
+	Description     string             `json:"description"`
+	UrlImage        pgtype.Text        `json:"url_image"`
+	ConfirmedBy     pgtype.UUID        `json:"confirmed_by"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+type ReportGuest struct {
+	ReportGuestID pgtype.UUID        `json:"report_guest_id"`
+	NameSender    string             `json:"name_sender"`
+	PhoneSender   pgtype.Text        `json:"phone_sender"`
+	EmailSender   pgtype.Text        `json:"email_sender"`
+	RoomID        pgtype.UUID        `json:"room_id"`
+	ItemID        pgtype.UUID        `json:"item_id"`
+	Status        int32              `json:"status"`
+	IsOpen        bool               `json:"is_open"`
+	Description   string             `json:"description"`
+	UrlImage      pgtype.Text        `json:"url_image"`
+	ConfirmedBy   pgtype.UUID        `json:"confirmed_by"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Role struct {
 	RoleID      pgtype.UUID      `json:"role_id"`
 	RoleName    string           `json:"role_name"`
@@ -153,6 +218,7 @@ type Room struct {
 	RoomDescription string           `json:"room_description"`
 	RoomImage       string           `json:"room_image"`
 	RoomStatus      string           `json:"room_status"`
+	QrCode          pgtype.Text      `json:"qr_code"`
 	CreatedAt       pgtype.Timestamp `json:"created_at"`
 	UpdatedAt       pgtype.Timestamp `json:"updated_at"`
 	CreatedBy       pgtype.UUID      `json:"created_by"`

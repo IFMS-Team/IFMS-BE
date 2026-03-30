@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS rooms(
     room_description VARCHAR(255) NOT NULL,
     room_image VARCHAR(255) NOT NULL,
     room_status VARCHAR(20) NOT NULL DEFAULT 'available' CHECK (room_status IN ('available', 'using', 'maintenance')),
+    qr_code VARCHAR(255) UNIQUE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     created_by UUID NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
