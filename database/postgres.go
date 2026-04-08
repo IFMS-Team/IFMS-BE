@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	db "github.com/vippergod12/IFMS-BE/sql/generated"
+	db "github.com/IFMS-Team/IFMS-BE/sql/generated"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
