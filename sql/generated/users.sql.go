@@ -26,7 +26,7 @@ const countUsersByStatus = `-- name: CountUsersByStatus :one
 SELECT COUNT(*) FROM users WHERE status = $1
 `
 
-func (q *Queries) CountUsersByStatus(ctx context.Context, status int32) (int64, error) {
+func (q *Queries) CountUsersByStatus(ctx context.Context, status string) (int64, error) {
 	row := q.db.QueryRow(ctx, countUsersByStatus, status)
 	var count int64
 	err := row.Scan(&count)
@@ -34,9 +34,9 @@ func (q *Queries) CountUsersByStatus(ctx context.Context, status int32) (int64, 
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (username, email, password, password_hash, phone, address, cccd, role_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING user_id, username, email, password, password_hash, created_at, updated_at, status, phone, address, cccd, role_id
+INSERT INTO users (username, email, password, password_hash, full_name, phone, address, cccd, role_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING user_id, username, email, password, password_hash, full_name, created_at, updated_at, status, phone, address, cccd, role_id
 `
 
 type CreateUserParams struct {
@@ -44,6 +44,7 @@ type CreateUserParams struct {
 	Email        string      `json:"email"`
 	Password     string      `json:"password"`
 	PasswordHash string      `json:"password_hash"`
+	FullName     string      `json:"full_name"`
 	Phone        string      `json:"phone"`
 	Address      string      `json:"address"`
 	Cccd         string      `json:"cccd"`
@@ -56,6 +57,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Email,
 		arg.Password,
 		arg.PasswordHash,
+		arg.FullName,
 		arg.Phone,
 		arg.Address,
 		arg.Cccd,
@@ -68,6 +70,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Email,
 		&i.Password,
 		&i.PasswordHash,
+		&i.FullName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Status,
@@ -150,7 +153,7 @@ func (q *Queries) GetActiveSessionsByUserID(ctx context.Context, userID pgtype.U
 }
 
 const getUserByCCCD = `-- name: GetUserByCCCD :one
-SELECT user_id, username, email, password, password_hash, created_at, updated_at, status, phone, address, cccd, role_id FROM users WHERE cccd = $1
+SELECT user_id, username, email, password, password_hash, full_name, created_at, updated_at, status, phone, address, cccd, role_id FROM users WHERE cccd = $1
 `
 
 func (q *Queries) GetUserByCCCD(ctx context.Context, cccd string) (User, error) {
@@ -162,6 +165,7 @@ func (q *Queries) GetUserByCCCD(ctx context.Context, cccd string) (User, error) 
 		&i.Email,
 		&i.Password,
 		&i.PasswordHash,
+		&i.FullName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Status,
@@ -174,7 +178,7 @@ func (q *Queries) GetUserByCCCD(ctx context.Context, cccd string) (User, error) 
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT user_id, username, email, password, password_hash, created_at, updated_at, status, phone, address, cccd, role_id FROM users WHERE email = $1
+SELECT user_id, username, email, password, password_hash, full_name, created_at, updated_at, status, phone, address, cccd, role_id FROM users WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -186,6 +190,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Email,
 		&i.Password,
 		&i.PasswordHash,
+		&i.FullName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Status,
@@ -199,7 +204,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 
 const getUserByID = `-- name: GetUserByID :one
 
-SELECT user_id, username, email, password, password_hash, created_at, updated_at, status, phone, address, cccd, role_id FROM users WHERE user_id = $1
+SELECT user_id, username, email, password, password_hash, full_name, created_at, updated_at, status, phone, address, cccd, role_id FROM users WHERE user_id = $1
 `
 
 // ===================== USER CRUD =====================
@@ -212,6 +217,7 @@ func (q *Queries) GetUserByID(ctx context.Context, userID pgtype.UUID) (User, er
 		&i.Email,
 		&i.Password,
 		&i.PasswordHash,
+		&i.FullName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Status,
@@ -224,7 +230,7 @@ func (q *Queries) GetUserByID(ctx context.Context, userID pgtype.UUID) (User, er
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT user_id, username, email, password, password_hash, created_at, updated_at, status, phone, address, cccd, role_id FROM users WHERE username = $1
+SELECT user_id, username, email, password, password_hash, full_name, created_at, updated_at, status, phone, address, cccd, role_id FROM users WHERE username = $1
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -236,6 +242,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.Email,
 		&i.Password,
 		&i.PasswordHash,
+		&i.FullName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Status,
@@ -292,27 +299,28 @@ func (q *Queries) GetUserTrackingHistory(ctx context.Context, arg GetUserTrackin
 }
 
 const getUserWithRole = `-- name: GetUserWithRole :one
-SELECT u.user_id, u.username, u.email, u.password, u.password_hash, u.created_at, u.updated_at, u.status, u.phone, u.address, u.cccd, u.role_id, r.role_name, r.description as role_description
+SELECT u.user_id, u.username, u.email, u.password, u.password_hash, u.full_name, u.created_at, u.updated_at, u.status, u.phone, u.address, u.cccd, u.role_id, r.role_name, r.description as role_description
 FROM users u
 JOIN roles r ON u.role_id = r.role_id
 WHERE u.user_id = $1
 `
 
 type GetUserWithRoleRow struct {
-	UserID          pgtype.UUID      `json:"user_id"`
-	Username        string           `json:"username"`
-	Email           string           `json:"email"`
-	Password        string           `json:"password"`
-	PasswordHash    string           `json:"password_hash"`
-	CreatedAt       pgtype.Timestamp `json:"created_at"`
-	UpdatedAt       pgtype.Timestamp `json:"updated_at"`
-	Status          int32            `json:"status"`
-	Phone           string           `json:"phone"`
-	Address         string           `json:"address"`
-	Cccd            string           `json:"cccd"`
-	RoleID          pgtype.UUID      `json:"role_id"`
-	RoleName        string           `json:"role_name"`
-	RoleDescription pgtype.Text      `json:"role_description"`
+	UserID          pgtype.UUID        `json:"user_id"`
+	Username        string             `json:"username"`
+	Email           string             `json:"email"`
+	Password        string             `json:"password"`
+	PasswordHash    string             `json:"password_hash"`
+	FullName        string             `json:"full_name"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	Status          string             `json:"status"`
+	Phone           string             `json:"phone"`
+	Address         string             `json:"address"`
+	Cccd            string             `json:"cccd"`
+	RoleID          pgtype.UUID        `json:"role_id"`
+	RoleName        string             `json:"role_name"`
+	RoleDescription pgtype.Text        `json:"role_description"`
 }
 
 func (q *Queries) GetUserWithRole(ctx context.Context, userID pgtype.UUID) (GetUserWithRoleRow, error) {
@@ -324,6 +332,7 @@ func (q *Queries) GetUserWithRole(ctx context.Context, userID pgtype.UUID) (GetU
 		&i.Email,
 		&i.Password,
 		&i.PasswordHash,
+		&i.FullName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Status,
@@ -396,7 +405,7 @@ func (q *Queries) InsertUserTrackingHistory(ctx context.Context, arg InsertUserT
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT user_id, username, email, password, password_hash, created_at, updated_at, status, phone, address, cccd, role_id FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2
+SELECT user_id, username, email, password, password_hash, full_name, created_at, updated_at, status, phone, address, cccd, role_id FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2
 `
 
 type ListUsersParams struct {
@@ -419,6 +428,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.Email,
 			&i.Password,
 			&i.PasswordHash,
+			&i.FullName,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Status,
@@ -438,7 +448,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 }
 
 const listUsersByRoleID = `-- name: ListUsersByRoleID :many
-SELECT user_id, username, email, password, password_hash, created_at, updated_at, status, phone, address, cccd, role_id FROM users WHERE role_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3
+SELECT user_id, username, email, password, password_hash, full_name, created_at, updated_at, status, phone, address, cccd, role_id FROM users WHERE role_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3
 `
 
 type ListUsersByRoleIDParams struct {
@@ -462,6 +472,7 @@ func (q *Queries) ListUsersByRoleID(ctx context.Context, arg ListUsersByRoleIDPa
 			&i.Email,
 			&i.Password,
 			&i.PasswordHash,
+			&i.FullName,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Status,
@@ -481,13 +492,13 @@ func (q *Queries) ListUsersByRoleID(ctx context.Context, arg ListUsersByRoleIDPa
 }
 
 const listUsersByStatus = `-- name: ListUsersByStatus :many
-SELECT user_id, username, email, password, password_hash, created_at, updated_at, status, phone, address, cccd, role_id FROM users WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3
+SELECT user_id, username, email, password, password_hash, full_name, created_at, updated_at, status, phone, address, cccd, role_id FROM users WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3
 `
 
 type ListUsersByStatusParams struct {
-	Status int32 `json:"status"`
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Status string `json:"status"`
+	Limit  int32  `json:"limit"`
+	Offset int32  `json:"offset"`
 }
 
 func (q *Queries) ListUsersByStatus(ctx context.Context, arg ListUsersByStatusParams) ([]User, error) {
@@ -505,6 +516,7 @@ func (q *Queries) ListUsersByStatus(ctx context.Context, arg ListUsersByStatusPa
 			&i.Email,
 			&i.Password,
 			&i.PasswordHash,
+			&i.FullName,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Status,
@@ -524,7 +536,7 @@ func (q *Queries) ListUsersByStatus(ctx context.Context, arg ListUsersByStatusPa
 }
 
 const listUsersWithRole = `-- name: ListUsersWithRole :many
-SELECT u.user_id, u.username, u.email, u.password, u.password_hash, u.created_at, u.updated_at, u.status, u.phone, u.address, u.cccd, u.role_id, r.role_name
+SELECT u.user_id, u.username, u.email, u.password, u.password_hash, u.full_name, u.created_at, u.updated_at, u.status, u.phone, u.address, u.cccd, u.role_id, r.role_name
 FROM users u
 JOIN roles r ON u.role_id = r.role_id
 ORDER BY u.created_at DESC
@@ -537,19 +549,20 @@ type ListUsersWithRoleParams struct {
 }
 
 type ListUsersWithRoleRow struct {
-	UserID       pgtype.UUID      `json:"user_id"`
-	Username     string           `json:"username"`
-	Email        string           `json:"email"`
-	Password     string           `json:"password"`
-	PasswordHash string           `json:"password_hash"`
-	CreatedAt    pgtype.Timestamp `json:"created_at"`
-	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
-	Status       int32            `json:"status"`
-	Phone        string           `json:"phone"`
-	Address      string           `json:"address"`
-	Cccd         string           `json:"cccd"`
-	RoleID       pgtype.UUID      `json:"role_id"`
-	RoleName     string           `json:"role_name"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	Username     string             `json:"username"`
+	Email        string             `json:"email"`
+	Password     string             `json:"password"`
+	PasswordHash string             `json:"password_hash"`
+	FullName     string             `json:"full_name"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	Status       string             `json:"status"`
+	Phone        string             `json:"phone"`
+	Address      string             `json:"address"`
+	Cccd         string             `json:"cccd"`
+	RoleID       pgtype.UUID        `json:"role_id"`
+	RoleName     string             `json:"role_name"`
 }
 
 func (q *Queries) ListUsersWithRole(ctx context.Context, arg ListUsersWithRoleParams) ([]ListUsersWithRoleRow, error) {
@@ -567,6 +580,7 @@ func (q *Queries) ListUsersWithRole(ctx context.Context, arg ListUsersWithRolePa
 			&i.Email,
 			&i.Password,
 			&i.PasswordHash,
+			&i.FullName,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Status,
@@ -587,7 +601,7 @@ func (q *Queries) ListUsersWithRole(ctx context.Context, arg ListUsersWithRolePa
 }
 
 const searchUsers = `-- name: SearchUsers :many
-SELECT u.user_id, u.username, u.email, u.password, u.password_hash, u.created_at, u.updated_at, u.status, u.phone, u.address, u.cccd, u.role_id, r.role_name
+SELECT u.user_id, u.username, u.email, u.password, u.password_hash, u.full_name, u.created_at, u.updated_at, u.status, u.phone, u.address, u.cccd, u.role_id, r.role_name
 FROM users u
 JOIN roles r ON u.role_id = r.role_id
 WHERE u.username ILIKE '%' || $1 || '%'
@@ -604,19 +618,20 @@ type SearchUsersParams struct {
 }
 
 type SearchUsersRow struct {
-	UserID       pgtype.UUID      `json:"user_id"`
-	Username     string           `json:"username"`
-	Email        string           `json:"email"`
-	Password     string           `json:"password"`
-	PasswordHash string           `json:"password_hash"`
-	CreatedAt    pgtype.Timestamp `json:"created_at"`
-	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
-	Status       int32            `json:"status"`
-	Phone        string           `json:"phone"`
-	Address      string           `json:"address"`
-	Cccd         string           `json:"cccd"`
-	RoleID       pgtype.UUID      `json:"role_id"`
-	RoleName     string           `json:"role_name"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	Username     string             `json:"username"`
+	Email        string             `json:"email"`
+	Password     string             `json:"password"`
+	PasswordHash string             `json:"password_hash"`
+	FullName     string             `json:"full_name"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	Status       string             `json:"status"`
+	Phone        string             `json:"phone"`
+	Address      string             `json:"address"`
+	Cccd         string             `json:"cccd"`
+	RoleID       pgtype.UUID        `json:"role_id"`
+	RoleName     string             `json:"role_name"`
 }
 
 func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]SearchUsersRow, error) {
@@ -634,6 +649,7 @@ func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]Sea
 			&i.Email,
 			&i.Password,
 			&i.PasswordHash,
+			&i.FullName,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Status,
@@ -657,7 +673,7 @@ const softDeleteUser = `-- name: SoftDeleteUser :one
 UPDATE users
 SET status = 0, updated_at = NOW()
 WHERE user_id = $1
-RETURNING user_id, username, email, password, password_hash, created_at, updated_at, status, phone, address, cccd, role_id
+RETURNING user_id, username, email, password, password_hash, full_name, created_at, updated_at, status, phone, address, cccd, role_id
 `
 
 func (q *Queries) SoftDeleteUser(ctx context.Context, userID pgtype.UUID) (User, error) {
@@ -669,6 +685,7 @@ func (q *Queries) SoftDeleteUser(ctx context.Context, userID pgtype.UUID) (User,
 		&i.Email,
 		&i.Password,
 		&i.PasswordHash,
+		&i.FullName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Status,
@@ -682,15 +699,16 @@ func (q *Queries) SoftDeleteUser(ctx context.Context, userID pgtype.UUID) (User,
 
 const updateUser = `-- name: UpdateUser :one
 UPDATE users
-SET username = $2, email = $3, phone = $4, address = $5, updated_at = NOW()
+SET username = $2, email = $3, full_name = $4, phone = $5, address = $6, updated_at = NOW()
 WHERE user_id = $1
-RETURNING user_id, username, email, password, password_hash, created_at, updated_at, status, phone, address, cccd, role_id
+RETURNING user_id, username, email, password, password_hash, full_name, created_at, updated_at, status, phone, address, cccd, role_id
 `
 
 type UpdateUserParams struct {
 	UserID   pgtype.UUID `json:"user_id"`
 	Username string      `json:"username"`
 	Email    string      `json:"email"`
+	FullName string      `json:"full_name"`
 	Phone    string      `json:"phone"`
 	Address  string      `json:"address"`
 }
@@ -700,6 +718,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		arg.UserID,
 		arg.Username,
 		arg.Email,
+		arg.FullName,
 		arg.Phone,
 		arg.Address,
 	)
@@ -710,6 +729,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.Email,
 		&i.Password,
 		&i.PasswordHash,
+		&i.FullName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Status,
@@ -742,7 +762,7 @@ const updateUserRole = `-- name: UpdateUserRole :one
 UPDATE users
 SET role_id = $2, updated_at = NOW()
 WHERE user_id = $1
-RETURNING user_id, username, email, password, password_hash, created_at, updated_at, status, phone, address, cccd, role_id
+RETURNING user_id, username, email, password, password_hash, full_name, created_at, updated_at, status, phone, address, cccd, role_id
 `
 
 type UpdateUserRoleParams struct {
@@ -759,6 +779,7 @@ func (q *Queries) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) 
 		&i.Email,
 		&i.Password,
 		&i.PasswordHash,
+		&i.FullName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Status,
@@ -774,12 +795,12 @@ const updateUserStatus = `-- name: UpdateUserStatus :one
 UPDATE users
 SET status = $2, updated_at = NOW()
 WHERE user_id = $1
-RETURNING user_id, username, email, password, password_hash, created_at, updated_at, status, phone, address, cccd, role_id
+RETURNING user_id, username, email, password, password_hash, full_name, created_at, updated_at, status, phone, address, cccd, role_id
 `
 
 type UpdateUserStatusParams struct {
 	UserID pgtype.UUID `json:"user_id"`
-	Status int32       `json:"status"`
+	Status string      `json:"status"`
 }
 
 func (q *Queries) UpdateUserStatus(ctx context.Context, arg UpdateUserStatusParams) (User, error) {
@@ -791,6 +812,7 @@ func (q *Queries) UpdateUserStatus(ctx context.Context, arg UpdateUserStatusPara
 		&i.Email,
 		&i.Password,
 		&i.PasswordHash,
+		&i.FullName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Status,

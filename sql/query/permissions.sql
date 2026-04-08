@@ -5,8 +5,8 @@ SELECT * FROM permissions WHERE permission_id = $1;
 SELECT * FROM permissions ORDER BY created_at;
 
 -- name: CreatePermission :one
-INSERT INTO permissions (permission_name, description)
-VALUES ($1, $2)
+INSERT INTO permissions (permission_name, description, code)
+VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: DeletePermission :exec

@@ -226,18 +226,19 @@ type Room struct {
 }
 
 type User struct {
-	UserID       pgtype.UUID      `json:"user_id"`
-	Username     string           `json:"username"`
-	Email        string           `json:"email"`
-	Password     string           `json:"password"`
-	PasswordHash string           `json:"password_hash"`
-	CreatedAt    pgtype.Timestamp `json:"created_at"`
-	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
-	Status       int32            `json:"status"`
-	Phone        string           `json:"phone"`
-	Address      string           `json:"address"`
-	Cccd         string           `json:"cccd"`
-	RoleID       pgtype.UUID      `json:"role_id"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	Username     string             `json:"username"`
+	Email        string             `json:"email"`
+	Password     string             `json:"password"`
+	PasswordHash string             `json:"password_hash"`
+	FullName     string             `json:"full_name"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	Status       string             `json:"status"`
+	Phone        string             `json:"phone"`
+	Address      string             `json:"address"`
+	Cccd         string             `json:"cccd"`
+	RoleID       pgtype.UUID        `json:"role_id"`
 }
 
 type UserSession struct {

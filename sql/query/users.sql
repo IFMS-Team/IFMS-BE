@@ -51,13 +51,13 @@ SELECT COUNT(*) FROM users;
 SELECT COUNT(*) FROM users WHERE status = $1;
 
 -- name: CreateUser :one
-INSERT INTO users (username, email, password, password_hash, phone, address, cccd, role_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO users (username, email, password, password_hash, full_name, phone, address, cccd, role_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING *;
 
 -- name: UpdateUser :one
 UPDATE users
-SET username = $2, email = $3, phone = $4, address = $5, updated_at = NOW()
+SET username = $2, email = $3, full_name = $4, phone = $5, address = $6, updated_at = NOW()
 WHERE user_id = $1
 RETURNING *;
 

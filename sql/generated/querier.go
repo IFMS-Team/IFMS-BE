@@ -23,7 +23,7 @@ type Querier interface {
 	CountPendingTicketItems(ctx context.Context, ticketID pgtype.UUID) (int64, error)
 	CountTicketItemsByStatus(ctx context.Context, arg CountTicketItemsByStatusParams) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
-	CountUsersByStatus(ctx context.Context, status int32) (int64, error)
+	CountUsersByStatus(ctx context.Context, status string) (int64, error)
 	CreateAuditLog(ctx context.Context, arg CreateAuditLogParams) (AuditLog, error)
 	// ===================== MAINTENANCE TICKETS =====================
 	CreateMaintenanceTicket(ctx context.Context, arg CreateMaintenanceTicketParams) (MaintenanceTicket, error)

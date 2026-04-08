@@ -47,18 +47,19 @@ func (q *Queries) CheckRoleHasPermission(ctx context.Context, arg CheckRoleHasPe
 }
 
 const createPermission = `-- name: CreatePermission :one
-INSERT INTO permissions (permission_name, description)
-VALUES ($1, $2)
+INSERT INTO permissions (permission_name, description, code)
+VALUES ($1, $2, $3)
 RETURNING permission_id, permission_name, description, created_at, updated_at, status, code
 `
 
 type CreatePermissionParams struct {
 	PermissionName string      `json:"permission_name"`
 	Description    pgtype.Text `json:"description"`
+	Code           string      `json:"code"`
 }
 
 func (q *Queries) CreatePermission(ctx context.Context, arg CreatePermissionParams) (Permission, error) {
-	row := q.db.QueryRow(ctx, createPermission, arg.PermissionName, arg.Description)
+	row := q.db.QueryRow(ctx, createPermission, arg.PermissionName, arg.Description, arg.Code)
 	var i Permission
 	err := row.Scan(
 		&i.PermissionID,
