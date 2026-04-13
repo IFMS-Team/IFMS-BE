@@ -12,5 +12,11 @@ INSERT INTO roles (role_name, description)
 VALUES ($1, $2)
 RETURNING *;
 
+-- name: UpdateRole :one
+UPDATE roles
+SET role_name = $2, description = $3, updated_at = NOW()
+WHERE role_id = $1
+RETURNING *;
+
 -- name: DeleteRole :exec
 DELETE FROM roles WHERE role_id = $1;

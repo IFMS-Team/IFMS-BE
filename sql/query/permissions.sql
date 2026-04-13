@@ -9,6 +9,12 @@ INSERT INTO permissions (permission_name, description, code)
 VALUES ($1, $2, $3)
 RETURNING *;
 
+-- name: UpdatePermission :one
+UPDATE permissions
+SET permission_name = $2, description = $3, code = $4, updated_at = NOW()
+WHERE permission_id = $1
+RETURNING *;
+
 -- name: DeletePermission :exec
 DELETE FROM permissions WHERE permission_id = $1;
 

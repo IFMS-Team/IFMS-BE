@@ -107,3 +107,29 @@ func (q *Queries) ListRoles(ctx context.Context) ([]Role, error) {
 	}
 	return items, nil
 }
+
+const updateRole = `-- name: UpdateRole :one
+UPDATE roles
+SET role_name = $2, description = $3, updated_at = NOW()
+WHERE role_id = $1
+RETURNING role_id, role_name, description, created_at, updated_at
+`
+
+type UpdateRoleParams struct {
+	RoleID      pgtype.UUID `json:"role_id"`
+	RoleName    string      `json:"role_name"`
+	Description pgtype.Text `json:"description"`
+}
+
+func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error) {
+	row := q.db.QueryRow(ctx, updateRole, arg.RoleID, arg.RoleName, arg.Description)
+	var i Role
+	err := row.Scan(
+		&i.RoleID,
+		&i.RoleName,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

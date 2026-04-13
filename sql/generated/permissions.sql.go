@@ -181,3 +181,37 @@ func (q *Queries) RemovePermissionFromRole(ctx context.Context, arg RemovePermis
 	_, err := q.db.Exec(ctx, removePermissionFromRole, arg.RoleID, arg.PermissionID)
 	return err
 }
+
+const updatePermission = `-- name: UpdatePermission :one
+UPDATE permissions
+SET permission_name = $2, description = $3, code = $4, updated_at = NOW()
+WHERE permission_id = $1
+RETURNING permission_id, permission_name, description, created_at, updated_at, status, code
+`
+
+type UpdatePermissionParams struct {
+	PermissionID   pgtype.UUID `json:"permission_id"`
+	PermissionName string      `json:"permission_name"`
+	Description    pgtype.Text `json:"description"`
+	Code           string      `json:"code"`
+}
+
+func (q *Queries) UpdatePermission(ctx context.Context, arg UpdatePermissionParams) (Permission, error) {
+	row := q.db.QueryRow(ctx, updatePermission,
+		arg.PermissionID,
+		arg.PermissionName,
+		arg.Description,
+		arg.Code,
+	)
+	var i Permission
+	err := row.Scan(
+		&i.PermissionID,
+		&i.PermissionName,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Status,
+		&i.Code,
+	)
+	return i, err
+}

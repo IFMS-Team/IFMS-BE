@@ -114,8 +114,10 @@ type Querier interface {
 	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]SearchUsersRow, error)
 	SoftDeleteUser(ctx context.Context, userID pgtype.UUID) (User, error)
 	UpdateMaintenanceTicketStatus(ctx context.Context, arg UpdateMaintenanceTicketStatusParams) (MaintenanceTicket, error)
+	UpdatePermission(ctx context.Context, arg UpdatePermissionParams) (Permission, error)
 	UpdateReportCheckerStatus(ctx context.Context, arg UpdateReportCheckerStatusParams) (ReportChecker, error)
 	UpdateReportGuestStatus(ctx context.Context, arg UpdateReportGuestStatusParams) (ReportGuest, error)
+	UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error)
 	UpdateTicketItemCheckStatus(ctx context.Context, arg UpdateTicketItemCheckStatusParams) (MaintenanceTicketItem, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
