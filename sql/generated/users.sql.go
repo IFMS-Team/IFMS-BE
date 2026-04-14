@@ -91,67 +91,6 @@ func (q *Queries) DeleteUser(ctx context.Context, userID pgtype.UUID) error {
 	return err
 }
 
-const deleteUserSession = `-- name: DeleteUserSession :exec
-UPDATE user_sessions SET is_deleted = true, updated_at = NOW()
-WHERE user_id = $1 AND token = $2
-`
-
-type DeleteUserSessionParams struct {
-	UserID pgtype.UUID `json:"user_id"`
-	Token  string      `json:"token"`
-}
-
-func (q *Queries) DeleteUserSession(ctx context.Context, arg DeleteUserSessionParams) error {
-	_, err := q.db.Exec(ctx, deleteUserSession, arg.UserID, arg.Token)
-	return err
-}
-
-const deleteUserSessionsByUserId = `-- name: DeleteUserSessionsByUserId :exec
-UPDATE user_sessions SET is_deleted = true, updated_at = NOW()
-WHERE user_id = $1 AND is_deleted = false
-`
-
-func (q *Queries) DeleteUserSessionsByUserId(ctx context.Context, userID pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteUserSessionsByUserId, userID)
-	return err
-}
-
-const getActiveSessionsByUserID = `-- name: GetActiveSessionsByUserID :many
-SELECT session_id, user_id, token, device_info, ip_address, is_deleted, expired_at, created_at, updated_at FROM user_sessions
-WHERE user_id = $1 AND is_deleted = false AND expired_at > EXTRACT(EPOCH FROM NOW())::BIGINT
-ORDER BY created_at DESC
-`
-
-func (q *Queries) GetActiveSessionsByUserID(ctx context.Context, userID pgtype.UUID) ([]UserSession, error) {
-	rows, err := q.db.Query(ctx, getActiveSessionsByUserID, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []UserSession
-	for rows.Next() {
-		var i UserSession
-		if err := rows.Scan(
-			&i.SessionID,
-			&i.UserID,
-			&i.Token,
-			&i.DeviceInfo,
-			&i.IpAddress,
-			&i.IsDeleted,
-			&i.ExpiredAt,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getUserByCCCD = `-- name: GetUserByCCCD :one
 SELECT user_id, username, email, password, password_hash, full_name, created_at, updated_at, status, phone, address, cccd, role_id FROM users WHERE cccd = $1
 `
@@ -254,50 +193,6 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 	return i, err
 }
 
-const getUserTrackingHistory = `-- name: GetUserTrackingHistory :many
-SELECT tracking_id, user_id, nonce, action, entity_type, entity_id, ip_address, description, created_at, updated_at FROM user_tracking_history
-WHERE user_id = $1
-ORDER BY created_at DESC
-LIMIT $2 OFFSET $3
-`
-
-type GetUserTrackingHistoryParams struct {
-	UserID pgtype.UUID `json:"user_id"`
-	Limit  int32       `json:"limit"`
-	Offset int32       `json:"offset"`
-}
-
-func (q *Queries) GetUserTrackingHistory(ctx context.Context, arg GetUserTrackingHistoryParams) ([]UserTrackingHistory, error) {
-	rows, err := q.db.Query(ctx, getUserTrackingHistory, arg.UserID, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []UserTrackingHistory
-	for rows.Next() {
-		var i UserTrackingHistory
-		if err := rows.Scan(
-			&i.TrackingID,
-			&i.UserID,
-			&i.Nonce,
-			&i.Action,
-			&i.EntityType,
-			&i.EntityID,
-			&i.IpAddress,
-			&i.Description,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getUserWithRole = `-- name: GetUserWithRole :one
 SELECT u.user_id, u.username, u.email, u.password, u.password_hash, u.full_name, u.created_at, u.updated_at, u.status, u.phone, u.address, u.cccd, u.role_id, r.role_name, r.description as role_description
 FROM users u
@@ -344,64 +239,6 @@ func (q *Queries) GetUserWithRole(ctx context.Context, userID pgtype.UUID) (GetU
 		&i.RoleDescription,
 	)
 	return i, err
-}
-
-const insertUserSession = `-- name: InsertUserSession :exec
-
-INSERT INTO user_sessions (user_id, token, device_info, ip_address, is_deleted, expired_at)
-VALUES ($1, $2, $3, $4, $5, $6)
-`
-
-type InsertUserSessionParams struct {
-	UserID     pgtype.UUID `json:"user_id"`
-	Token      string      `json:"token"`
-	DeviceInfo pgtype.Text `json:"device_info"`
-	IpAddress  pgtype.Text `json:"ip_address"`
-	IsDeleted  bool        `json:"is_deleted"`
-	ExpiredAt  int64       `json:"expired_at"`
-}
-
-// ===================== USER SESSIONS =====================
-func (q *Queries) InsertUserSession(ctx context.Context, arg InsertUserSessionParams) error {
-	_, err := q.db.Exec(ctx, insertUserSession,
-		arg.UserID,
-		arg.Token,
-		arg.DeviceInfo,
-		arg.IpAddress,
-		arg.IsDeleted,
-		arg.ExpiredAt,
-	)
-	return err
-}
-
-const insertUserTrackingHistory = `-- name: InsertUserTrackingHistory :exec
-
-INSERT INTO user_tracking_history (user_id, nonce, action, entity_type, entity_id, ip_address, description)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-`
-
-type InsertUserTrackingHistoryParams struct {
-	UserID      pgtype.UUID `json:"user_id"`
-	Nonce       int64       `json:"nonce"`
-	Action      string      `json:"action"`
-	EntityType  pgtype.Text `json:"entity_type"`
-	EntityID    pgtype.UUID `json:"entity_id"`
-	IpAddress   pgtype.Text `json:"ip_address"`
-	Description pgtype.Text `json:"description"`
-}
-
-// ===================== USER TRACKING =====================
-func (q *Queries) InsertUserTrackingHistory(ctx context.Context, arg InsertUserTrackingHistoryParams) error {
-	_, err := q.db.Exec(ctx, insertUserTrackingHistory,
-		arg.UserID,
-		arg.Nonce,
-		arg.Action,
-		arg.EntityType,
-		arg.EntityID,
-		arg.IpAddress,
-		arg.Description,
-	)
-	return err
 }
 
 const listUsers = `-- name: ListUsers :many

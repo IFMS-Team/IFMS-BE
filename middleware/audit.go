@@ -132,13 +132,23 @@ func AuditMiddleware(dbConn *database.DbPostgres, logger *zap.Logger) func(http.
 				if newDataJSON == nil {
 					newDataJSON = []byte("{}")
 				}
-				reqJSON, _ = json.Marshal(map[string]interface{}{
-					"method": r.Method,
-					"path":   r.URL.Path,
-					"query":  r.URL.RawQuery,
-					"body":   json.RawMessage(requestBody),
-				})
-				resJSON = recorder.body.Bytes()
+			var bodyJSON json.RawMessage
+			if len(requestBody) > 0 && json.Valid(requestBody) {
+				bodyJSON = requestBody
+			} else {
+				bodyJSON = []byte("{}")
+			}
+			reqJSON, _ = json.Marshal(map[string]interface{}{
+				"method": r.Method,
+				"path":   r.URL.Path,
+				"query":  r.URL.RawQuery,
+				"body":   bodyJSON,
+			})
+			if resBody := recorder.body.Bytes(); len(resBody) > 0 && json.Valid(resBody) {
+				resJSON = resBody
+			} else {
+				resJSON = []byte("{}")
+			}
 
 				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 				defer cancel()

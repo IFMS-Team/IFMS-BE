@@ -86,9 +86,7 @@ type Querier interface {
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	GetUserTrackingHistory(ctx context.Context, arg GetUserTrackingHistoryParams) ([]UserTrackingHistory, error)
 	GetUserWithRole(ctx context.Context, userID pgtype.UUID) (GetUserWithRoleRow, error)
-	// ===================== USER SESSIONS =====================
 	InsertUserSession(ctx context.Context, arg InsertUserSessionParams) error
-	// ===================== USER TRACKING =====================
 	InsertUserTrackingHistory(ctx context.Context, arg InsertUserTrackingHistoryParams) error
 	ListMaintenanceTickets(ctx context.Context, arg ListMaintenanceTicketsParams) ([]ListMaintenanceTicketsRow, error)
 	ListMaintenanceTicketsByAssignee(ctx context.Context, arg ListMaintenanceTicketsByAssigneeParams) ([]ListMaintenanceTicketsByAssigneeRow, error)
@@ -123,6 +121,7 @@ type Querier interface {
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (User, error)
 	UpdateUserStatus(ctx context.Context, arg UpdateUserStatusParams) (User, error)
+	ValidateUserSession(ctx context.Context, token string) (pgtype.UUID, error)
 }
 
 var _ Querier = (*Queries)(nil)
